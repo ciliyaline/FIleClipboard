@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.post("/register/")
 async def register(user: User, db: Session = Depends(get_db)):
-    db_user = Users(id=user.id, passwd=user.passwd)
+    db_user = Users(id=user.id, hashed_passwd=user.passwd)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
