@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine
-from .models import *
+from ..models import *
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine("sqlite:///./test.db")
+# TODO: 根据草案换成 PostgreSQL / MS SQL Server
+engine = create_engine("sqlite:///./phase_one.db")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
