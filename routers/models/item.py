@@ -26,7 +26,7 @@ class Text(Item):
     title = mapped_column(String, index=True)
     description = mapped_column(String, default="")
     type = mapped_column(String, index=True, default="text")    # optional, e.g. cpp, js, ...
-    size = mapped_column(Integer)
+    length = mapped_column(Integer)
 
     owner = relationship("users", back_populates="text")
 
