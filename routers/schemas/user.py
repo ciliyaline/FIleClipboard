@@ -1,5 +1,12 @@
-from ..user.schemas import User
+from pydantic import BaseModel
+from .item import Item
+from ..user.schemas import User as UserCreate
 
-# TODO: 从数据库读 user 的时候, 可以添加一个成员
-# items: list[Item] = []
-# 但是这会修改别人目前的工作, 先放放
+
+class UserBase(BaseModel):
+    id: int
+
+class User(UserBase):
+    items: list[Item] = []
+    class Config:
+        orm_mode = True

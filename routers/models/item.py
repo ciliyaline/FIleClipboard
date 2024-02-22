@@ -3,7 +3,8 @@ from .base import Base
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import mapped_column, relationship
 
-
+# TODO: 根据草案, 过期时间应是可被单独设置的
+# 让 text 和 file 直接继承自 base
 LIFE_CYCLE: int = 7 * 24 * 3600 # 或可考虑置为静态成员
 
 
@@ -12,7 +13,7 @@ LIFE_CYCLE: int = 7 * 24 * 3600 # 或可考虑置为静态成员
 class Item(Base):
     __tablename__ = "item"
     id = mapped_column(Integer, primary_key=True)
-    hashed_password = mapped_column(String)
+    hashed_passwd = mapped_column(String)
     upload_time = mapped_column(String, index=True)
 
     owner_id = mapped_column(Integer, ForeignKey("users.id"))
