@@ -35,7 +35,7 @@ class Text(Item):
 
 class File(Item):
     __tablename__ = "file"
-    content = mapped_column(String)
+    content = mapped_column(String) # 本意是云存储的外链, 可能没时间实现
     filename = mapped_column(String, index=True)
     type = mapped_column(String, index=True)
     size = mapped_column(Integer)
