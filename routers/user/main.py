@@ -1,11 +1,10 @@
 from fastapi.routing import APIRouter
-from fastapi import Depends, FastAPI, HTTPException, Request, Response,status
+from fastapi import Depends, FastAPI, HTTPException,status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-# from ..database import get_db
 from ..models import *
 from . import schemas
 from ..database import *
@@ -16,18 +15,6 @@ ALGORITHM = "SHA256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 router = APIRouter()
-
-# 中间件
-# @router.middleware("http")
-# async def db_session_middleware(request: Request, call_next):
-#     response = Response("Internal server error", status_code=500)
-#     try:
-#         request.state.db = SessionLocal()
-#         response = await call_next(request)
-#     finally:
-#         request.state.db.close()
-#     return response
-
 
 
 # 创建新用户
