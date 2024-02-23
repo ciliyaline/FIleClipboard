@@ -1,5 +1,6 @@
 from sqlalchemy.orm import DeclarativeBase
-from user.schemas import *
+# from ..user.schemas import *
+from ..user.schemas import UserCreate, User
 from sqlalchemy.orm import Session
 
 class Base(DeclarativeBase):
