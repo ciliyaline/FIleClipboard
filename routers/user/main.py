@@ -1,6 +1,5 @@
 from fastapi.routing import APIRouter
 from fastapi import Depends, FastAPI, HTTPException, Request, Response,status
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
@@ -29,21 +28,6 @@ router = APIRouter()
 #         request.state.db.close()
 #     return response
 
-# 控制跨域资源共享
-# origins = [
-#     "http://localhost.tiangolo.com",
-#     "https://localhost.tiangolo.com",
-#     "http://localhost",
-#     "http://localhost:8080",
-# ]
-
-# router.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
 
 
 # 创建新用户
@@ -157,10 +141,10 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")  #用令牌过期时间创建 timedelta 对象。创建并返回真正的 JWT 访问令牌。
 
 
-
+ #获取用户信息
 @router.get("/users/me/", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    return current_user   #获取用户信息
+    return current_user  
 
 
 @router.get("/users/me/items/")
