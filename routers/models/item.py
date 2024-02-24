@@ -3,25 +3,21 @@ from .base import Base
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import mapped_column, relationship
 
-# TODO: 根据草案, 过期时间应是可被单独设置的
-# 让 text 和 file 直接继承自 base
-LIFE_CYCLE: int = 7 * 24 * 3600 # 或可考虑置为静态成员
 
 
-# 如果不能用继承, 就单独写 text.py 和 file.py
 # 可按上传时间, 文件类型, 文件名排序等, 这些要添加索引
-class Item(Base):
-    __tablename__ = "item"
+class Item:
     id = mapped_column(Integer, primary_key=True)
     hashed_passwd = mapped_column(String)
     upload_time = mapped_column(String, index=True)
+    life_cycle = mapped_column(int)
+    MAX_LIFE_CYCLE: int = 7 * 24 * 3600 # second
 
     owner_id = mapped_column(Integer, ForeignKey("users.id"))
 
-    # owner = relationship("users", back_populates="item")  # 这个在子类里单独写
 
 
-class Text(Item):
+class Text(Base, Item):
     __tablename__ = "text"
     content = mapped_column(String)
     title = mapped_column(String, index=True)
@@ -34,7 +30,7 @@ class Text(Item):
     MAX_LENGTH: int = 65536 # temporary
 
 
-class File(Item):
+class File(Base, Item):
     __tablename__ = "file"
     content = mapped_column(String) # 本意是云存储的外链, 可能没时间实现
     filename = mapped_column(String, index=True)

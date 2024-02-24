@@ -32,8 +32,6 @@ def encrypt(passwd: str) -> str:
     return passwd
 
 def commit(db: Session, item: models.Item) -> models.Item:
-    # 不知道 db.add() 是根据什么判断提交到哪张表的,
-    # 啊, 我傻了, session 应该本身就包含了自己是哪张表的信息
     # TODO: 正式跑起来之后有机会可以试试这个函数, 不知道能不能用
     db.add(item)
     db.commit()
@@ -57,6 +55,8 @@ def create_text(db: Session, t: schemas.TextCreate) -> models.Text:
         id = t.id,
         hashed_passwd = encrypt(t.passwd),
         upload_time = "tmp", # FIXME
+        life_cycle = t.lift_cycle,
+        # ↑ base class member
         content = t.content,
         title = t.title,
         description = t.description,
@@ -74,6 +74,8 @@ def create_file(db: Session, f: schemas.FileCreate) -> models.File:
         id = f.id,
         hashed_passwd = encrypt(f.passwd),
         upload_time = "tmp", # FIXME
+        life_cycle = f.lift_cycle,
+        # base class member
         content = f.content, # TODO: 把文件存到服务器和生成外链是哪一步要操作的,是这里吗
         filename = f.filename,
         type = f.type,

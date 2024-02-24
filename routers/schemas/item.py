@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 class ItemBase(BaseModel):
     upload_time: str
+    lift_cycle: int
 
 class ItemCreate(ItemBase):
     passwd: str
