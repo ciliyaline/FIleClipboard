@@ -155,7 +155,7 @@ async def read_own_items(current_user: User = Depends(get_current_active_user)):
 async def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if len(user.password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
-    db_user = User(username=user.username, email=user.email, hashed_password=user.password)
+    db_user = User(username=user.uername, email=user.email, hashed_password=user.password)
     db.add(db_user)
     db.commit()
 

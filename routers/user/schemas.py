@@ -13,6 +13,7 @@ class UserBase(BaseModel):
     email:EmailStr = None
 class UserCreate(UserBase):
     password: str
+    uername : str
     
 # 用户模型
 class User(UserBase):
