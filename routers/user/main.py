@@ -1,5 +1,5 @@
 from fastapi.routing import APIRouter
-from fastapi import Depends, FastAPI, HTTPException,status
+from fastapi import Depends, FastAPI, HTTPException, Request, Response,status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
@@ -15,6 +15,18 @@ ALGORITHM = "SHA256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 router = APIRouter()
+
+# 中间件
+# @router.middleware("http")
+# async def db_session_middleware(request: Request, call_next):
+#     response = Response("Internal server error", status_code=500)
+#     try:
+#         request.state.db = SessionLocal()
+#         response = await call_next(request)
+#     finally:
+#         request.state.db.close()
+#     return response
+
 
 
 # 创建新用户
@@ -57,7 +69,7 @@ def get_password_hash(password):
 def get_user(db, username: str):
     if username in db:
         user_dict = db[username]
-        return UserInDB(**user_dict)  
+        return schemas.UserInDB(**user_dict)  
     
 #用于身份验证，并返回用户
 def authenticate_user(get_db, username: str, password: str):
@@ -69,7 +81,7 @@ def authenticate_user(get_db, username: str, password: str):
     return user 
 
 #创建生成新的访问令牌的工具函数。
-def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
+def create_access_token(data: dict, expires_delta: schemas.Union[timedelta, None] = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -91,7 +103,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = schemas.TokenData(username=username)
     except JWTError:
         raise credentials_exception
     user = get_user(get_db, username=token_data.username)
@@ -113,7 +125,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 @router.post("/token")
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends()
-) -> Token:
+) -> schemas.Token:
     user = authenticate_user(get_db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -125,7 +137,7 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return Token(access_token=access_token, token_type="bearer")  #用令牌过期时间创建 timedelta 对象。创建并返回真正的 JWT 访问令牌。
+    return schemas.Token(access_token=access_token, token_type="bearer")  #用令牌过期时间创建 timedelta 对象。创建并返回真正的 JWT 访问令牌。
 
 
  #获取用户信息
