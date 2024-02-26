@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 
 class ItemBase(BaseModel):
+    http_id: str
     upload_time: str
     lift_cycle: int
+    owner_id: int
 
 class ItemCreate(ItemBase):
     passwd: str         # 这里其实是 hashed_password, 加密已在 .router 里完成

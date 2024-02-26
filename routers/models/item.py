@@ -8,9 +8,10 @@ from sqlalchemy.orm import mapped_column, relationship
 # 可按上传时间, 文件类型, 文件名排序等, 这些要添加索引
 class Item:
     id = mapped_column(Integer, primary_key=True)
+    http_id = mapped_column(String)     # for http request
     hashed_passwd = mapped_column(String)
     upload_time = mapped_column(String, index=True)
-    life_cycle = mapped_column(int)
+    life_cycle = mapped_column(Integer, index=True)
     MAX_LIFE_CYCLE: int = 7 * 24 * 3600 # second
 
     owner_id = mapped_column(Integer, ForeignKey("users.id"))
@@ -20,7 +21,7 @@ class Item:
 class Text(Base, Item):
     __tablename__ = "text"
     content = mapped_column(String)
-    title = mapped_column(String, index=True)
+    title = mapped_column(String, index=True, default="")
     description = mapped_column(String, default="")
     type = mapped_column(String, index=True, default="text")    # optional, e.g. cpp, js, ...
     length = mapped_column(Integer)

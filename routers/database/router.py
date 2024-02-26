@@ -9,7 +9,7 @@ from ..schemas import *
 def get_current_time() -> str:
     pass    # TODO
 
-# FIXME: .database 里加密部分改过来, 加密挪到这里了
+
 def encrypt(passwd: str) -> str:
     pass    # TODO: 以后应该是从别的地方借一个 encrypt()
 
@@ -22,22 +22,26 @@ def get_filename_suffix(filename: str) -> str:
         return filename[index:]
 
 
+def spawn_http_id() -> str:
+    pass
+
+
 router = FastAPI()
 
 
+# 草案没写参查询数 user_id, 请求体里也没有, 但是必须有
 @router.post("/p/")
-async def router_create_text(body: TextRequestBody, db: Session = Depends(get_db)) -> None:
+async def router_create_text(body: TextRequestBody, user_id: int, db: Session = Depends(get_db)) -> None:
     text_create: TextCreate = TextCreate(
+        http_id=spawn_http_id(),
         upload_time=get_current_time(),
         lift_cycle=body.expiresIn,
+        owner_id= user_id,
         passwd=encrypt(body.password) if body.encrypted else "",
         content=body.content,   # NOTE:就先假设是合法数据
-        title="",
-        description="",
-        type="text",
         length=len(body.content),
     )
-    # 如果每个用户文本数量有限制, 应在此处审查
+    # NOTE:如果每个用户文本数量有限制, 应在此处审查
     create_text(db, text_create)
 
 
@@ -47,10 +51,12 @@ async def get_text(id: str) -> str:
 
 
 @router.get("/f/", response_model=FileResponseBody)  # 数据约定这里是 get, 没写错
-async def router_create_file(body: FileRequestBody, db: Session = Depends(get_db)) -> FileResponseBody:
+async def router_create_file(body: FileRequestBody, user_id: int, db: Session = Depends(get_db)) -> FileResponseBody:
     file_create: FileCreate = FileCreate(
+        http_id=spawn_http_id(),
         upload_time=get_current_time(),
         lift_cycle=body.expiresIn,
+        owner_id= user_id,
         passwd=encrypt(body.password) if body.encrypted else "",
         content=body.file,
         filename=body.filename,

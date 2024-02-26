@@ -27,12 +27,6 @@ def get_file(db: Session, file_id: int) -> models.File:
 
 # create
 
-def commit(db: Session, item: models.Item) -> models.Item:
-    # TODO: 正式跑起来之后有机会可以试试这个函数, 不知道能不能用
-    db.add(item)
-    db.commit()
-    db.refresh(item)
-    return item
 
 def create_user(db: Session, user: schemas.UserCreate) -> models.Users:
     db_user: models.Users = models.Users(
@@ -47,10 +41,11 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.Users:
 
 def create_text(db: Session, t: schemas.TextCreate) -> models.Text:
     db_text: models.Text = models.Text(
-        id = t.id,
+        http_id = t.http_id,
         hashed_passwd = t.passwd,
         upload_time = t.upload_time,
         life_cycle = t.lift_cycle,
+        owner_id = t.owner_id,
         # ↑ base class member
         content = t.content,
         title = t.title,
@@ -65,12 +60,13 @@ def create_text(db: Session, t: schemas.TextCreate) -> models.Text:
 
 
 def create_file(db: Session, f: schemas.FileCreate) -> models.File:
-    db_file : models.Text = models.Text(
-        id = f.id,
+    db_file: models.File = models.File(
+        http_id = f.http_id,
         hashed_passwd = f.passwd,
         upload_time = f.upload_time,
         life_cycle = f.lift_cycle,
-        # base class member
+        owner_id = f.owner_id,
+        # ↑ base class member
         content = f.content, # TODO: 把文件存到服务器和生成外链是哪一步要操作的,是这里吗
         filename = f.filename,
         type = f.type,
