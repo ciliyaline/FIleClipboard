@@ -54,7 +54,7 @@ def create_text(db: Session, t: schemas.TextCreate) -> models.Text:
     db_text : models.Text = models.Text(
         id = t.id,
         hashed_passwd = encrypt(t.passwd),
-        upload_time = "tmp", # FIXME
+        upload_time = t.upload_time,
         life_cycle = t.lift_cycle,
         # ↑ base class member
         content = t.content,
@@ -73,7 +73,7 @@ def create_file(db: Session, f: schemas.FileCreate) -> models.File:
     db_file : models.Text = models.Text(
         id = f.id,
         hashed_passwd = encrypt(f.passwd),
-        upload_time = "tmp", # FIXME
+        upload_time = f.upload_time,
         life_cycle = f.lift_cycle,
         # base class member
         content = f.content, # TODO: 把文件存到服务器和生成外链是哪一步要操作的,是这里吗
@@ -88,6 +88,7 @@ def create_file(db: Session, f: schemas.FileCreate) -> models.File:
 
 
 # delete
+# TODO:定期删除过期 item
 
 # update
 

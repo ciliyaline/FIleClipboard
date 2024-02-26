@@ -3,7 +3,7 @@ from .base import Base
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import mapped_column, relationship
 
-
+# TODO: item id: str for http response
 
 # 可按上传时间, 文件类型, 文件名排序等, 这些要添加索引
 class Item:
