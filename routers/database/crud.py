@@ -27,10 +27,6 @@ def get_file(db: Session, file_id: int) -> models.File:
 
 # create
 
-def encrypt(passwd: str) -> str:
-    # FIXME
-    return passwd
-
 def commit(db: Session, item: models.Item) -> models.Item:
     # TODO: 正式跑起来之后有机会可以试试这个函数, 不知道能不能用
     db.add(item)
@@ -41,7 +37,7 @@ def commit(db: Session, item: models.Item) -> models.Item:
 def create_user(db: Session, user: schemas.UserCreate) -> models.Users:
     db_user: models.Users = models.Users(
         id = user.id,
-        hashed_passwd = encrypt(user.passwd),
+        hashed_passwd = user.passwd,    # NOTE: item 的密码是在 .router 里加密了, 此处等待交接
     )
     db.add(db_user)
     db.commit()
@@ -50,10 +46,9 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.Users:
 
 
 def create_text(db: Session, t: schemas.TextCreate) -> models.Text:
-    # TODO: 也许有办法从子类构建父类(TextCreate -> TextBase)
-    db_text : models.Text = models.Text(
+    db_text: models.Text = models.Text(
         id = t.id,
-        hashed_passwd = encrypt(t.passwd),
+        hashed_passwd = t.passwd,
         upload_time = t.upload_time,
         life_cycle = t.lift_cycle,
         # ↑ base class member
@@ -72,7 +67,7 @@ def create_text(db: Session, t: schemas.TextCreate) -> models.Text:
 def create_file(db: Session, f: schemas.FileCreate) -> models.File:
     db_file : models.Text = models.Text(
         id = f.id,
-        hashed_passwd = encrypt(f.passwd),
+        hashed_passwd = f.passwd,
         upload_time = f.upload_time,
         life_cycle = f.lift_cycle,
         # base class member

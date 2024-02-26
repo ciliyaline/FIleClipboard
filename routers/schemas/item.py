@@ -5,7 +5,7 @@ class ItemBase(BaseModel):
     lift_cycle: int
 
 class ItemCreate(ItemBase):
-    passwd: str
+    passwd: str         # 这里其实是 hashed_password, 加密已在 .router 里完成
 
 class Item(ItemBase):   # 收到请求时, 从数据库读出来并返回的东西
     id: int
