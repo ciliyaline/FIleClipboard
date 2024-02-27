@@ -3,11 +3,11 @@ from .. import models, schemas
 
 # read
 
-def get_user(db: Session, user_id: int) -> models.Users:
+def get_user(db: Session, user_id: int) -> models.Users | None:
     return db.query(models.Users).filter(models.Users.id == user_id).first()
 
 
-def get_user_by_email(db: Session, email: str) -> models.Users:
+def get_user_by_email(db: Session, email: str) -> models.Users | None:
     pass    # we have no email in Users
 
 
@@ -16,19 +16,19 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> list[models.Users
     return db.query(models.Users).offset(skip).limit(limit).all()
 
 
-def get_text(db: Session, text_id: int) -> models.Text:
+def get_text(db: Session, text_id: int) -> models.Text | None:
     return db.query(models.Text).filter(models.Text.id == text_id).first()
 
 
-def get_text_by_http_id(db: Session, http_id: str) -> models.Text:
+def get_text_by_http_id(db: Session, http_id: str) -> models.Text | None:
     return db.query(models.Text).filter(models.Text.http_id == http_id).first()
 
 
-def get_file(db: Session, file_id: int) -> models.File:
+def get_file(db: Session, file_id: int) -> models.File | None:
     return db.query(models.File).filter(models.File.id == file_id).first()
 
 
-def get_file_by_http_id(db: Session, http_id: str) -> models.File:
+def get_file_by_http_id(db: Session, http_id: str) -> models.File | None:
     return db.query(models.File).filter(models.File.http_id == http_id).first()
 
 
@@ -75,7 +75,7 @@ def create_file(db: Session, f: schemas.FileCreate) -> models.File:
         life_cycle = f.lift_cycle,
         owner_id = f.owner_id,
         # ↑ base class member
-        content = f.content, # TODO: 把文件存到服务器和生成外链是哪一步要操作的,是这里吗
+        address = f.address,
         filename = f.filename,
         type = f.type,
         size = f.size,

@@ -32,7 +32,7 @@ class Text(Base, Item):
 
 class File(Base, Item):
     __tablename__ = "file"
-    content = mapped_column(String)
+    address = mapped_column(String)
     filename = mapped_column(String, index=True)
     type = mapped_column(String, index=True)
     size = mapped_column(Integer)

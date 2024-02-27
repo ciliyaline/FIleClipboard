@@ -8,8 +8,14 @@ from .crud import *
 from ..schemas import *
 from .. import models
 
+
+def log(info: str) -> None:
+    with open("log.txt", "a") as f:
+        f.write(info + '\n')
+
+
 def get_current_time() -> str:
-    return time()
+    return str(time())
 
 
 def encrypt(passwd: str) -> str:
@@ -25,11 +31,24 @@ def get_filename_suffix(filename: str) -> str:
 
 
 def generate_http_id() -> str:
-    return "http_id" + time()
+    return "http_id-" + get_current_time()
 
 
 def generate_download_link(file: models.File) -> str:
     return "download_link"
+
+
+def generate_storage_address(http_id: str) -> str:
+    # temporary
+    FILE_STORAGE_PATH: str = "../../../file_storage/"
+
+    return FILE_STORAGE_PATH + http_id
+
+
+def store_file(file_address: str, content: str) -> None:
+    binary: bytes = File()  # FIXME
+    with open(file_address, "wb") as f:
+        f.write(binary)
 
 
 router = FastAPI()
@@ -52,31 +71,53 @@ async def router_create_text(body: TextRequestBody, user_id: int, db: Session = 
 
 
 @router.get("/p/{id}")
-async def get_text_content(id: str) -> str:
+async def get_text_content(id: str, db: Session = Depends(get_db)) -> str:
     # NOTE: 不知道如果没查询到会发生什么, 待测试
-    return get_text_by_http_id(id).content
+    text_in_db = get_text_by_http_id(db, id)
+    if text_in_db is None:
+        raise HTTPException(404, "paste not found")
+    # TODO:410: 记录已过期
+    return text_in_db.content
 
 
 @router.get("/f/", response_model=FileResponseBody)  # 数据约定这里是 get, 没写错
 async def router_create_file(body: FileRequestBody, user_id: int, db: Session = Depends(get_db)) -> FileResponseBody:
+    timestmap: str = get_current_time()
+    http_id: str = generate_http_id()
+    file_address: str = generate_storage_address(http_id)
+    store_file(file_address, body.file)
+    file_size: int = len(body.file)
+    hashed_passwd: str = encrypt(body.password) if body.encrypted else ""
     file_create: FileCreate = FileCreate(
-        http_id=generate_http_id(),
-        upload_time=get_current_time(),
+        http_id=http_id,
+        upload_time=timestmap,
         lift_cycle=body.expiresIn,
         owner_id=user_id,
-        passwd=encrypt(body.password) if body.encrypted else "",
-        content=body.file,
+        passwd=hashed_passwd,
+        address=file_address,
         filename=body.filename,
         type=get_filename_suffix(body.filename),
-        size=len(body.file),
+        size=file_size,
     )
-    # TODO: 这里应该查询用户剩余容量
+    # TODO: 这里应该查询用户剩余容量, 等待交接
     create_file(db, file_create)
+
+    return FileResponseBody(
+        id=http_id,
+        filename=body.filename,
+        filesize=str(file_size),
+        hash="",        # FIXME
+        createdAt="",   # FIXME
+        expiresIn=body.expiresIn,
+        encrypted=(body.encrypted != 0),
+        hashedPassword=hashed_passwd,
+    )
 
 
 @router.get("/f/{id}", response_model=FileResponseBody)
-async def get_file(id: str) -> FileResponseBody:
-    file: models.File = get_file_by_http_id(id)
+async def get_file_info(id: str, db: Session = Depends(get_db)) -> FileResponseBody:
+    file: models.File | None = get_file_by_http_id(db, id)
+    # TODO: http exception
     return FileResponseBody(
         id=id,
         filename=file.filename,
@@ -87,3 +128,10 @@ async def get_file(id: str) -> FileResponseBody:
         encrypted=(file.hashed_passwd != ""),
         hashedPassword=file.hashed_passwd,
     )
+
+
+# NOTE: 这个函数应该绑定一个一次性(?)链接
+@router.get("/fake_download_link/", response_model=StreamingResponse)
+async def router_get_file() -> StreamingResponse:
+    file_address: str = ""
+    return StreamingResponse(file_address)
