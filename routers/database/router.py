@@ -1,3 +1,4 @@
+from time import time
 from fastapi import Depends, FastAPI, HTTPException, File, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -5,13 +6,14 @@ from sqlalchemy.orm import Session
 from .database import get_db    # TODO:不过这样一来, 数据库表会创建吗, 好像并不会
 from .crud import *
 from ..schemas import *
+from .. import models
 
 def get_current_time() -> str:
-    pass    # TODO
+    return time()
 
 
 def encrypt(passwd: str) -> str:
-    pass    # TODO: 以后应该是从别的地方借一个 encrypt()
+    return "passwd" # TODO: 以后应该是从别的地方借一个 encrypt()
 
 
 def get_filename_suffix(filename: str) -> str:
@@ -22,8 +24,12 @@ def get_filename_suffix(filename: str) -> str:
         return filename[index:]
 
 
-def spawn_http_id() -> str:
-    pass
+def generate_http_id() -> str:
+    return "http_id" + time()
+
+
+def generate_download_link(file: models.File) -> str:
+    return "download_link"
 
 
 router = FastAPI()
@@ -33,10 +39,10 @@ router = FastAPI()
 @router.post("/p/")
 async def router_create_text(body: TextRequestBody, user_id: int, db: Session = Depends(get_db)) -> None:
     text_create: TextCreate = TextCreate(
-        http_id=spawn_http_id(),
+        http_id=generate_http_id(),
         upload_time=get_current_time(),
         lift_cycle=body.expiresIn,
-        owner_id= user_id,
+        owner_id=user_id,
         passwd=encrypt(body.password) if body.encrypted else "",
         content=body.content,   # NOTE:就先假设是合法数据
         length=len(body.content),
@@ -46,17 +52,18 @@ async def router_create_text(body: TextRequestBody, user_id: int, db: Session = 
 
 
 @router.get("/p/{id}")
-async def get_text(id: str) -> str:
-    pass
+async def get_text_content(id: str) -> str:
+    # NOTE: 不知道如果没查询到会发生什么, 待测试
+    return get_text_by_http_id(id).content
 
 
 @router.get("/f/", response_model=FileResponseBody)  # 数据约定这里是 get, 没写错
 async def router_create_file(body: FileRequestBody, user_id: int, db: Session = Depends(get_db)) -> FileResponseBody:
     file_create: FileCreate = FileCreate(
-        http_id=spawn_http_id(),
+        http_id=generate_http_id(),
         upload_time=get_current_time(),
         lift_cycle=body.expiresIn,
-        owner_id= user_id,
+        owner_id=user_id,
         passwd=encrypt(body.password) if body.encrypted else "",
         content=body.file,
         filename=body.filename,
@@ -69,4 +76,14 @@ async def router_create_file(body: FileRequestBody, user_id: int, db: Session = 
 
 @router.get("/f/{id}", response_model=FileResponseBody)
 async def get_file(id: str) -> FileResponseBody:
-    pass
+    file: models.File = get_file_by_http_id(id)
+    return FileResponseBody(
+        id=id,
+        filename=file.filename,
+        filesize=file.size,
+        hash="hash",
+        createdAt=generate_download_link(file),
+        expiresIn=file.life_cycle,
+        encrypted=(file.hashed_passwd != ""),
+        hashedPassword=file.hashed_passwd,
+    )

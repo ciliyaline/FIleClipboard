@@ -3,7 +3,6 @@ from .. import models, schemas
 
 # read
 
-# 为什么不命名成 User 而要命名成 Users.?
 def get_user(db: Session, user_id: int) -> models.Users:
     return db.query(models.Users).filter(models.Users.id == user_id).first()
 
@@ -21,8 +20,16 @@ def get_text(db: Session, text_id: int) -> models.Text:
     return db.query(models.Text).filter(models.Text.id == text_id).first()
 
 
+def get_text_by_http_id(db: Session, http_id: str) -> models.Text:
+    return db.query(models.Text).filter(models.Text.http_id == http_id).first()
+
+
 def get_file(db: Session, file_id: int) -> models.File:
     return db.query(models.File).filter(models.File.id == file_id).first()
+
+
+def get_file_by_http_id(db: Session, http_id: str) -> models.File:
+    return db.query(models.File).filter(models.File.http_id == http_id).first()
 
 
 # create
@@ -41,6 +48,7 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.Users:
 
 def create_text(db: Session, t: schemas.TextCreate) -> models.Text:
     db_text: models.Text = models.Text(
+        # **f.model_dump(), # 可以试试
         http_id = t.http_id,
         hashed_passwd = t.passwd,
         upload_time = t.upload_time,

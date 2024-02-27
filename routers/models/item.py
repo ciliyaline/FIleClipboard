@@ -3,7 +3,6 @@ from .base import Base
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import mapped_column, relationship
 
-# TODO: item id: str for http response
 
 # 可按上传时间, 文件类型, 文件名排序等, 这些要添加索引
 class Item:
@@ -33,7 +32,7 @@ class Text(Base, Item):
 
 class File(Base, Item):
     __tablename__ = "file"
-    content = mapped_column(String) # 本意是云存储的外链, 可能没时间实现
+    content = mapped_column(String)
     filename = mapped_column(String, index=True)
     type = mapped_column(String, index=True)
     size = mapped_column(Integer)

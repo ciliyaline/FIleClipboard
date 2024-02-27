@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
+# 本意 Item, Text, File 是用作 response_model 的
+# 但是和数据约定配合不是很好, 导致完全没用上
+# 重构的事还是下次一定吧
+
 class ItemBase(BaseModel):
     http_id: str
     upload_time: str
