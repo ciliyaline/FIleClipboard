@@ -14,4 +14,4 @@ def get_db():
     finally:
         db.close()
 
-Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)   # 创建数据表

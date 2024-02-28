@@ -1,6 +1,12 @@
+from os import remove
+from fastapi import File
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from .router import get_current_time
+
+def log(info: str) -> None:
+    with open("log.txt", "a") as f:
+        f.write(info + '\n')
 
 # read
 
@@ -34,7 +40,6 @@ def get_file_by_http_id(db: Session, http_id: str) -> models.File | None:
 
 
 # create
-
 
 def create_user(db: Session, user: schemas.UserCreate) -> models.Users:
     db_user: models.Users = models.Users(
@@ -89,7 +94,6 @@ def create_file(db: Session, f: schemas.FileCreate) -> models.File:
 
 # delete
 
-
 def del_expired_item(db: Session) -> None:
     timestamp: float = float(get_current_time())
     del_expired_text(db, timestamp)
@@ -112,42 +116,32 @@ def del_expired_file(db: Session, timestamp: float) -> None:
         # i: models.Text
         if float(i.upload_time) + i.life_cycle < timestamp:
             expired.append(i)
+            del_file_in_storage(i)
     db.delete(expired)
     db.commit()
+
 
 
 # update
 
 
+# 与文件实际储存方式有关
+
+def store_file(file_address: str, content: str) -> None:
+    binary: bytes = File()  # FIXME
+    with open(file_address, "wb") as f:
+        f.write(binary)
 
 
+def generate_storage_address(http_id: str) -> str:
+    # temporary
+    FILE_STORAGE_PATH: str = "../../../file_storage/"
+
+    return FILE_STORAGE_PATH + http_id
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def del_file_in_storage(f: models.File) -> None:
+    file_address = generate_storage_address(f.http_id)
+    # 不过这样一来 generate 可能就不大合适了, 应改名为 get
+    # NOTE: 如果 generate() 改成了每次生成不同的链接, 那么数据库应该存储这些位置
+    remove(file_address)

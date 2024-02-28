@@ -1,18 +1,14 @@
 from time import time
-from fastapi import Depends, FastAPI, HTTPException, File, UploadFile
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+
+# from routers.database.crud import generate_storage_address, store_file    # vscode 自动生成, 如果相对路径有问题可以试试
 
 from .database import get_db    # TODO:不过这样一来, 数据库表会创建吗, 好像并不会
 from .crud import *
 from ..schemas import *
 from .. import models
-
-# TODO: 把部分小函数挪到 .curd 或者 .database
-def log(info: str) -> None:
-    with open("log.txt", "a") as f:
-        f.write(info + '\n')
-
 
 def get_current_time() -> str:
     return str(time())
@@ -35,20 +31,8 @@ def generate_http_id() -> str:
 
 
 def generate_download_link(file: models.File) -> str:
+    # TODO:我想到一个绝妙的解决方法, 生成下载链接类似 httpid, 然后加到一个 map 里, ...
     return "download_link"
-
-
-def generate_storage_address(http_id: str) -> str:
-    # temporary
-    FILE_STORAGE_PATH: str = "../../../file_storage/"
-
-    return FILE_STORAGE_PATH + http_id
-
-
-def store_file(file_address: str, content: str) -> None:
-    binary: bytes = File()  # FIXME
-    with open(file_address, "wb") as f:
-        f.write(binary)
 
 
 # TODO: 可以考虑做成 Item 的成员函数
