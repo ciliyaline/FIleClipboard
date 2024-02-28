@@ -7,8 +7,8 @@ class FileResponseBody(BaseModel):
     id: str
     filename: str
     filesize: str
-    hash: str       # whats this?
-    createdAt: str  # 这个应该是生成的外链
+    hash: str       # 那这个只可能是外链了
+    createdAt: str  # 这个应该是何时生成
     expiresIn: int
     encrypted: bool
     hashedPassword: str

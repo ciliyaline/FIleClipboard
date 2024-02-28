@@ -8,7 +8,7 @@ from .crud import *
 from ..schemas import *
 from .. import models
 
-
+# TODO: 把部分小函数挪到 .curd 或者 .database
 def log(info: str) -> None:
     with open("log.txt", "a") as f:
         f.write(info + '\n')
@@ -51,6 +51,11 @@ def store_file(file_address: str, content: str) -> None:
         f.write(binary)
 
 
+# TODO: 可以考虑做成 Item 的成员函数
+def expired(item: models.Item) -> bool:
+    return float(item.upload_time) + item.life_cycle < float(get_current_time())
+
+
 router = FastAPI()
 
 
@@ -72,11 +77,13 @@ async def router_create_text(body: TextRequestBody, user_id: int, db: Session = 
 
 @router.get("/p/{id}")
 async def get_text_content(id: str, db: Session = Depends(get_db)) -> str:
-    # NOTE: 不知道如果没查询到会发生什么, 待测试
-    text_in_db = get_text_by_http_id(db, id)
+    text_in_db: models.Text | None = get_text_by_http_id(db, id)
+
     if text_in_db is None:
-        raise HTTPException(404, "paste not found")
-    # TODO:410: 记录已过期
+        raise HTTPException(404, "resource not found")
+    if expired(text_in_db):
+        raise HTTPException(410, "resource expired")
+
     return text_in_db.content
 
 
@@ -88,6 +95,7 @@ async def router_create_file(body: FileRequestBody, user_id: int, db: Session = 
     store_file(file_address, body.file)
     file_size: int = len(body.file)
     hashed_passwd: str = encrypt(body.password) if body.encrypted else ""
+
     file_create: FileCreate = FileCreate(
         http_id=http_id,
         upload_time=timestmap,
@@ -107,7 +115,7 @@ async def router_create_file(body: FileRequestBody, user_id: int, db: Session = 
         filename=body.filename,
         filesize=str(file_size),
         hash="",        # FIXME
-        createdAt="",   # FIXME
+        createdAt=timestmap,
         expiresIn=body.expiresIn,
         encrypted=(body.encrypted != 0),
         hashedPassword=hashed_passwd,
@@ -117,20 +125,25 @@ async def router_create_file(body: FileRequestBody, user_id: int, db: Session = 
 @router.get("/f/{id}", response_model=FileResponseBody)
 async def get_file_info(id: str, db: Session = Depends(get_db)) -> FileResponseBody:
     file: models.File | None = get_file_by_http_id(db, id)
-    # TODO: http exception
+
+    if file is None:
+        raise HTTPException(404, "resource not found")
+    if expired(file):
+        raise HTTPException(410, "resource expired")
+
     return FileResponseBody(
         id=id,
         filename=file.filename,
         filesize=file.size,
-        hash="hash",
-        createdAt=generate_download_link(file),
+        hash=generate_download_link(file),
+        createdAt=file.upload_time,
         expiresIn=file.life_cycle,
         encrypted=(file.hashed_passwd != ""),
         hashedPassword=file.hashed_passwd,
     )
 
 
-# NOTE: 这个函数应该绑定一个一次性(?)链接
+# NOTE: 这个函数应该绑定一个一次性(?), 有时效(?)的链接
 @router.get("/fake_download_link/", response_model=StreamingResponse)
 async def router_get_file() -> StreamingResponse:
     file_address: str = ""
