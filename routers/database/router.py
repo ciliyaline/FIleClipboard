@@ -59,7 +59,7 @@ def expired(item: models.Item) -> bool:
 router = FastAPI()
 
 
-# 草案没写参查询数 user_id, 请求体里也没有, 但是必须有
+# 草案没写查询参数 user_id, 请求体里也没有, 但是必须有
 @router.post("/p/")
 async def router_create_text(body: TextRequestBody, user_id: int, db: Session = Depends(get_db)) -> None:
     text_create: TextCreate = TextCreate(

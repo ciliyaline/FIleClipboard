@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from .. import models, schemas
+from .router import get_current_time
 
 # read
 
@@ -87,7 +88,33 @@ def create_file(db: Session, f: schemas.FileCreate) -> models.File:
 
 
 # delete
-# TODO:定期删除过期 item
+
+
+def del_expired_item(db: Session) -> None:
+    timestamp: float = float(get_current_time())
+    del_expired_text(db, timestamp)
+    del_expired_file(db, timestamp)
+
+
+def del_expired_text(db: Session, timestamp: float) -> None:
+    expired: list[models.Text] = []
+    for i in db.query(models.Text).all():
+        # i: models.Text
+        if float(i.upload_time) + i.life_cycle < timestamp:
+            expired.append(i)
+    db.delete(expired)  # NOTE: 如果不支持列表, 就一个一个删
+    db.commit()
+
+
+def del_expired_file(db: Session, timestamp: float) -> None:
+    expired: list[models.File] = []
+    for i in db.query(models.File).all():
+        # i: models.Text
+        if float(i.upload_time) + i.life_cycle < timestamp:
+            expired.append(i)
+    db.delete(expired)
+    db.commit()
+
 
 # update
 
