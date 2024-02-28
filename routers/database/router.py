@@ -10,6 +10,9 @@ from .crud import *
 from ..schemas import *
 from .. import models
 
+download_link: dict = {}    # "download link": file.id
+
+
 def get_current_time() -> str:
     return str(time())
 
@@ -27,12 +30,11 @@ def get_filename_suffix(filename: str) -> str:
 
 
 def generate_http_id() -> str:
-    return "http_id-" + get_current_time()
+    return "http_id-" + get_current_time()  # temporary
 
 
 def generate_download_link(file: models.File) -> str:
-    # TODO:我想到一个绝妙的解决方法, 生成下载链接类似 httpid, 然后加到一个 map 里, ...
-    return "download_link"
+    return "download_link-" + file.http_id  # temporary
 
 
 # TODO: 可以考虑做成 Item 的成员函数
@@ -115,11 +117,14 @@ async def get_file_info(id: str, db: Session = Depends(get_db)) -> FileResponseB
     if expired(file):
         raise HTTPException(410, "resource expired")
 
+    tmp_link: str = generate_download_link(file)
+    download_link[tmp_link] = file.id
+
     return FileResponseBody(
         id=id,
         filename=file.filename,
         filesize=file.size,
-        hash=generate_download_link(file),
+        hash=tmp_link,
         createdAt=file.upload_time,
         expiresIn=file.life_cycle,
         encrypted=(file.hashed_passwd != ""),
@@ -127,8 +132,15 @@ async def get_file_info(id: str, db: Session = Depends(get_db)) -> FileResponseB
     )
 
 
-# NOTE: 这个函数应该绑定一个一次性(?), 有时效(?)的链接
-@router.get("/fake_download_link/", response_model=StreamingResponse)
-async def router_get_file() -> StreamingResponse:
-    file_address: str = ""
+@router.get("/{code}", response_model=StreamingResponse)
+async def router_get_file(code: str, db: Session = Depends(get_db)) -> StreamingResponse:
+    if not code in download_link:
+        raise HTTPException(404)
+
+    file: models.File | None = get_file(db, download_link[code])
+    if file is None:
+        raise HTTPException(404)
+    file_address: str = generate_storage_address(file.http_id)
+
+    del download_link[code]
     return StreamingResponse(file_address)
