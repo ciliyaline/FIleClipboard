@@ -1,4 +1,6 @@
 from time import time
+from uuid import uuid3, uuid4
+from typing import Callable
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -29,12 +31,34 @@ def get_filename_suffix(filename: str) -> str:
         return filename[index:]
 
 
-def generate_http_id() -> str:
-    return "http_id-" + get_current_time()  # temporary
+MAX_ATTEMPS: int = 10
+# 这样做是有点偷懒了, 暂先这样吧
+def generate_http_id(db: Session, item_type: type) -> str:
+    http_id: str
+    check_func: Callable
+    match item_type:    # 可以尝试把 models.Text 用作参数
+        case models.Text:
+            check_func = get_text_by_http_id
+        case models.File:
+            check_func = get_file_by_http_id
+        case _:
+            raise ValueError("item_type should be one of 'models.Text' or 'models.File'")
+
+    for i in range(MAX_ATTEMPS):
+        http_id = str(uuid4().bytes)[0:6]
+        if check_func(db, http_id) is None:
+            return http_id
+
+    raise Exception(f"fail to generate {item_type} http_id")
 
 
 def generate_download_link(file: models.File) -> str:
-    return "download_link-" + file.http_id  # temporary
+    link: str
+    for i in range(MAX_ATTEMPS):
+        link = str(uuid4().bytes)
+        if not link in download_link:
+            return link
+    raise Exception("fail to generate download link")
 
 
 # TODO: 可以考虑做成 Item 的成员函数
@@ -49,7 +73,7 @@ router = FastAPI()
 @router.post("/p/")
 async def router_create_text(body: TextRequestBody, user_id: int, db: Session = Depends(get_db)) -> None:
     text_create: TextCreate = TextCreate(
-        http_id=generate_http_id(),
+        http_id=generate_http_id(db, models.Text),
         upload_time=get_current_time(),
         lift_cycle=body.expiresIn,
         owner_id=user_id,
@@ -76,7 +100,7 @@ async def get_text_content(id: str, db: Session = Depends(get_db)) -> str:
 @router.get("/f/", response_model=FileResponseBody)  # 数据约定这里是 get, 没写错
 async def router_create_file(body: FileRequestBody, user_id: int, db: Session = Depends(get_db)) -> FileResponseBody:
     timestmap: str = get_current_time()
-    http_id: str = generate_http_id()
+    http_id: str = generate_http_id(db, models.File)
     file_address: str = generate_storage_address(http_id)
     store_file(file_address, body.file)
     file_size: int = len(body.file)
