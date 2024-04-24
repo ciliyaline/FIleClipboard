@@ -1,11 +1,13 @@
 from sqlalchemy import create_engine
-from .models import *
+from .models.base import *
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine("sqlite:///./test.db")
+# TODO: 根据草案换成 PostgreSQL / MS SQL Server
+engine = create_engine("sqlite:///./phase_one.db")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -14,3 +16,4 @@ def get_db():
         db.close()
 
 Base.metadata.create_all(bind=engine)
+

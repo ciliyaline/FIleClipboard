@@ -1,8 +1,14 @@
 from .base import Base
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import mapped_column
-class Users(Base):
+
+# 存储在数据库中的用户模型 创建数据表
+class User(Base):
     __tablename__ = "users"
-    id = mapped_column(Integer, primary_key=True)
-    hashed_passwd = mapped_column(String)
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(Integer)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    is_active = Column(Boolean, default=True)
